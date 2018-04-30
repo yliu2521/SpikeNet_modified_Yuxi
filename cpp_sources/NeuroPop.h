@@ -89,6 +89,7 @@ public:
 	void add_perturbation(const int step_perturb);
 	void add_spike_freq_adpt(); /// add spike-frequency adaptation	
 	void set_spike_freq_adpt_para(const double dg_K_input); /// add spike-frequency adaptation
+	void set_spike_freq_adpt_tau(const double tau_K_input); /// add tau of spike-frequency adaptation
 	void set_spike_freq_adpt_para_heter(const vector<double>& dg_K_heter_input, const int start_step, const int end_step); /// add heterogenous spike-frequency adaptation
 
 private:

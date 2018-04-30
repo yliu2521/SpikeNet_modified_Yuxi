@@ -634,6 +634,10 @@ void NeuroPop::set_spike_freq_adpt_para(const double dg_K_input) {
 	dg_K = dg_K_input; // default value 0.01 (uS=miuSiemens)
 }
 
+void NeuroPop::set_spike_freq_adpt_tau(const double tau_K_input) {
+	tau_K = tau_K_input; // default value 80 (ms)
+}
+
 void NeuroPop::set_spike_freq_adpt_para_heter(const vector<double>& dg_K_heter_input, const int start_step, const int end_step) {
 	dg_K_heter = dg_K_heter_input; // default value 0.01 (uS=miuSiemens)
 	spike_freq_adpt_heter.on = true;

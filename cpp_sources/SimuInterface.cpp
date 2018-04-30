@@ -268,12 +268,17 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 			if (group_exist_HDF5(in_filename, pop_n + string("/INIT010"))) {
 				cout << "\t\t Spike-frequency adaptation settings...";
 				//int spike_freq_adpt = read_scalar_HDF5<int>(file, pop_n + string("/INIT010/spike_freq_adpt"));
+				if (dataset_exist_HDF5(file, pop_n + string("/INIT010/tau_K"))) {
+					cout << "reading tau_K...";
+					double tau_K = read_scalar_HDF5<double>(file, pop_n + string("/INIT010/tau_K"));
+					network.NeuroPopArray[ind]->set_spike_freq_adpt_tau(tau_K); 
+				}
 				network.NeuroPopArray[ind]->add_spike_freq_adpt();
 				if (dataset_exist_HDF5(file, pop_n + string("/INIT010/dg_K"))) {
 					cout << "reading dg_K...";
 					double dg_K = read_scalar_HDF5<double>(file, pop_n + string("/INIT010/dg_K"));
 					network.NeuroPopArray[ind]->set_spike_freq_adpt_para(dg_K); 
-				}
+				}				
 				// read in heterogenous spike_freq_adpt para
 				if (dataset_exist_HDF5(file, pop_n + string("/INIT010/dg_K_heter"))) {					
 					cout << "reading dg_K_heter...";
