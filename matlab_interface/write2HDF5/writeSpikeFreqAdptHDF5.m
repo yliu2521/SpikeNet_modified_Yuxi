@@ -19,7 +19,7 @@ end
 
 if nargin > 3
     hdf5write(FID,['/config/pops/pop',num2str(pop_ind),...
-        '/INIT010/tau_K'],dg_K,'WriteMode','append');
+        '/INIT010/tau_K'],tau_K,'WriteMode','append');
 end
 
 end
