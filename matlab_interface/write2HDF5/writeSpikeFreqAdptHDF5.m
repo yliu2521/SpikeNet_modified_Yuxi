@@ -4,6 +4,7 @@ function writeSpikeFreqAdptHDF5(FID, pop_ind, dg_K, tau_K)
 %          FID: file id for writing data
 %      pop_ind:
 %         dg_K: default value 0.01 (uS=miuSiemens)
+%        tau_K: defualt value: 80 ms
 
 % for C/C++ index convetion
 pop_ind = pop_ind-1;
@@ -21,6 +22,5 @@ if nargin > 3
     hdf5write(FID,['/config/pops/pop',num2str(pop_ind),...
         '/INIT010/tau_K'],tau_K,'WriteMode','append');
 end
-
 end
 
