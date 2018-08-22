@@ -136,6 +136,8 @@ jump_dist = sqrt(sum(jump_size.*jump_size,2)); %radial distance of increment
 jump_size = jump_size(:).*fw/2/pi;
 jump_dist = jump_dist(:).*fw/2/pi;
 
+% fit in stable distribution
+f = sasML([jump_size;-jump_size],'sas'); %forced Symetry alpha Stable fitting    
 
 % output results
 % I have record the bin and sliding win in substructure
@@ -159,6 +161,7 @@ switch lower(mode)
         R.grid.quick.sliding_win = win_gap; 
         R.grid.quick.jump_size = jump_size;
         R.grid.quick.jump_dist = jump_dist;
+        R.grid.quick.jump_size_pdf = f;
     case 'bayesian'
         R.grid.bayes.radius = width;
         R.grid.bayes.centre = [x_mean; y_mean];
@@ -172,6 +175,7 @@ switch lower(mode)
         R.grid.bayes.sliding_win = win_gap; 
         R.grid.bayes.jump_size = jump_size;
         R.grid.bayes.jump_dist = jump_dist;
+        R.grid.bayes.jump_size_pdf = f;
 end
 
 % if ~isfield(R, 'grid_sub') 
