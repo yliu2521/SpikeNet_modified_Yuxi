@@ -18,8 +18,6 @@ end
 hw = 31;
 fw = 2*hw+1;
 
-t_start = 100;
-t_end = 1*10^3;
 
 t_mid = R.grid.t_mid;
 ind_a_vec = R.grid.ind_ab(1,:);
@@ -38,6 +36,8 @@ switch mode
         is_pattern = ones(size(width));
 end
 
+t_start = 100;
+t_end = length(x_centre);
 
 [Lattice, ~] = lattice_nD(2, hw);
 x_pos_o = Lattice(R.spike_hist_compressed{1}, 1);

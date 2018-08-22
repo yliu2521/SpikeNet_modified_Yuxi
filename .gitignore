@@ -2,6 +2,7 @@
 *.mat
 makefile
 *.o 
+*.asv
 *~
 documentation/
 *.7z
