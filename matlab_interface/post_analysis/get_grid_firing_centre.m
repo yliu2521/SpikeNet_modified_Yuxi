@@ -14,11 +14,11 @@ mode = 'quick'; % quick or bayesian
 for i = 1:length(varargin)/2
     var_name = varargin{2*i-1};
     var_value = varargin{2*i};
-     if isnumeric(var_value)
+    if isnumeric(var_value)
         eval([var_name, '=', num2str(var_value), ';']);
-     else
-         eval([var_name, '=''', var_value, ''';']);
-     end
+    else
+        eval([var_name, '=''', var_value, ''';']);
+    end
 end
 mode
 
@@ -31,7 +31,7 @@ t_mid = t_mid_full(t_seg);
 ind_ab = ind_ab_full(:, t_seg);
 num_spikes_win = num_spikes_win_full(t_seg);
 
-    
+
 
 % % spikes_win_min
 % min_spike_requiremnt = num_spikes_win >= spikes_win_min;
@@ -124,9 +124,15 @@ y2 = diff(y1)/dt_mid;
 y3 = diff(y2)/dt_mid;
 jerk_mean = nanmean(sqrt(x3.^2 + y3.^2));
 
-
 % get the jump size and distance
-pos = [x_mean; y_mean].';
+switch mode
+    case 'quick'
+        is_pattern = ~isnan(x_mean) & ~isnan(y_mean);
+    case 'bayesian'
+        is_pattern = bayes_factor_ln > log(100);
+end
+
+pos = [x_mean(is_pattern); y_mean(is_pattern)].';
 pos = pos.*2*pi/fw;% deal with PBC
 pos_linear = unwrap(pos);
 pos_linear = pos_linear.*fw/2/pi;
@@ -137,11 +143,11 @@ jump_size = jump_size(:).*fw/2/pi;
 jump_dist = jump_dist(:).*fw/2/pi;
 
 % fit in stable distribution
-f = sasML([jump_size;-jump_size],'sas'); %forced Symetry alpha Stable fitting    
+f = sasML([jump_size;-jump_size],'sas'); %forced Symetry alpha Stable fitting
 
 % output results
 % I have record the bin and sliding win in substructure
-% R.grid.win_len = win_len; 
+% R.grid.win_len = win_len;
 % R.grid.win_gap = win_gap; % window gap
 R.grid.spikes_win_min =  spikes_win_min;
 R.grid.win_min_rate_Hz = win_min_rate_Hz;
@@ -158,7 +164,7 @@ switch lower(mode)
         R.grid.quick.height = height;
         R.grid.quick.jerk_mean = jerk_mean;
         R.grid.quick.bin_size = win_len; % steps
-        R.grid.quick.sliding_win = win_gap; 
+        R.grid.quick.sliding_win = win_gap;
         R.grid.quick.jump_size = jump_size;
         R.grid.quick.jump_dist = jump_dist;
         R.grid.quick.jump_size_pdf = f;
@@ -171,14 +177,14 @@ switch lower(mode)
         R.grid.bayes.height = height;
         R.grid.bayes.jerk_mean = jerk_mean;
         R.grid.bayes.bayes_factor_ln = bayes_factor_ln;
-        R.grid.bayes.bin_size = win_len; 
-        R.grid.bayes.sliding_win = win_gap; 
+        R.grid.bayes.bin_size = win_len;
+        R.grid.bayes.sliding_win = win_gap;
         R.grid.bayes.jump_size = jump_size;
         R.grid.bayes.jump_dist = jump_dist;
         R.grid.bayes.jump_size_pdf = f;
 end
 
-% if ~isfield(R, 'grid_sub') 
+% if ~isfield(R, 'grid_sub')
 %     R_sub.grid_sub = []; % to stop recursion
 %     % do the substitute study
 %     n_s = sum(R.spike_hist{1},2);
@@ -195,11 +201,11 @@ end
 %     R_sub.step_tot = R.step_tot;
 %     [sc,~] = find(sh);
 %     R_sub.spike_hist_compressed{1} = sc;
-%     % 
+%     %
 %     [ R_sub ] = get_grid_firing_centre( R_sub, varargin );
 %     R.grid_sub = R_sub.grid;
 % end
 
 end
 
-% function 
+% function
