@@ -158,7 +158,7 @@ switch lower(mode)
     case 'quick'
         R.grid.quick.radius = width;
         R.grid.quick.centre = [x_mean; y_mean];
-        R.grid.quick.jump_dist = jump_dist_raw;
+        R.grid.quick.jump_dist_raw = jump_dist_raw;
         R.grid.quick.jump_dir = jump_dir_raw;
         R.grid.quick.mlh = mlh;
         R.grid.quick.height = height;
@@ -167,11 +167,12 @@ switch lower(mode)
         R.grid.quick.sliding_win = win_gap;
         R.grid.quick.jump_size = jump_size;
         R.grid.quick.jump_dist = jump_dist;
+        R.grid.quick.jump_win = jump_win;
         R.grid.quick.jump_size_pdf = f;
     case 'bayesian'
         R.grid.bayes.radius = width;
         R.grid.bayes.centre = [x_mean; y_mean];
-        R.grid.bayes.jump_dist = jump_dist_raw;
+        R.grid.bayes.jump_dist_raw = jump_dist_raw;
         R.grid.bayes.jump_dir = jump_dir_raw;
         R.grid.bayes.mlh = mlh;
         R.grid.bayes.height = height;
@@ -182,6 +183,7 @@ switch lower(mode)
         R.grid.bayes.jump_size = jump_size;
         R.grid.bayes.jump_dist = jump_dist;
         R.grid.bayes.jump_size_pdf = f;
+        R.grid.quick.jump_win = jump_win;
 end
 
 % if ~isfield(R, 'grid_sub')
