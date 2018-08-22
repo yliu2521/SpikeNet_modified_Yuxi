@@ -127,14 +127,25 @@ jerk_mean = nanmean(sqrt(x3.^2 + y3.^2));
 
 % get the jump size and distance
 pos = [x_mean; y_mean].';
-pos = pos.*2*pi/fw;% deal with PBC
+pos = pos.*
 pos_linear = unwrap(pos);
-pos_linear = pos_linear.*fw/2/pi;
 jump_size = pos_linear(1:end-jump_win,:)-pos_linear((jump_win+1):end,:);
 jump_dist = sqrt(sum(jump_size.*jump_size,2)); %radial distance of increment
-% convert back to real coordinate
-jump_size = jump_size(:).*fw/2/pi;
-jump_dist = jump_dist(:).*fw/2/pi;
+
+
+% Analyze waiting time
+% NB avoid breaking the code, name new variables! keep old one the same
+wait_time = diff(find(jump_dist>0)); % ms
+% Analyze jump distance
+jps = jump_size(:);
+jps(jps==0) = []; %remove 0 jumps = no jump at all in CTRW sense
+out.wait_time = wait_time;
+out.jump_size_clean = jps;
+
+jump_dist_clean = jump_dist;
+jump_dist_clean(jump_dist_clean==0)=[];
+out.jump_dist_clean = jump_dist_clean;
+
 
 
 % output results
