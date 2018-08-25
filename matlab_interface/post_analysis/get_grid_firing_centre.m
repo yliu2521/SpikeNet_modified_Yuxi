@@ -6,7 +6,7 @@ function [ R ] = get_grid_firing_centre( R, varargin )
 % parameters
 win_len = 50; % window length in time steps
 win_gap = 10; % window gap
-jump_win = 150; % window for jump size and distance
+% jump_win = 150; % window for jump size and distance
 win_min_rate_Hz = 0.5;
 
 seg = 1:R.step_tot;
@@ -123,27 +123,26 @@ y1 = diff(y_tmp)/dt_mid;
 y2 = diff(y1)/dt_mid;
 y3 = diff(y2)/dt_mid;
 jerk_mean = nanmean(sqrt(x3.^2 + y3.^2));
-
+% below is wrong because bayes method cannot make sure the step is
+% consitent with jump_win
 % get the jump size and distance
-switch mode
-    case 'quick'
-        is_pattern = ~isnan(x_mean) & ~isnan(y_mean);
-    case 'bayesian'
-        is_pattern = bayes_factor_ln > log(100);
-end
-
-pos = [x_mean(is_pattern); y_mean(is_pattern)].';
-pos = pos.*2*pi/fw;% deal with PBC
-pos_linear = unwrap(pos);
-pos_linear = pos_linear.*fw/2/pi;
-jump_size = pos_linear(1:end-jump_win,:)-pos_linear((jump_win+1):end,:);
-jump_dist = sqrt(sum(jump_size.*jump_size,2)); %radial distance of increment
-% convert back to real coordinate
-jump_size = jump_size(:).*fw/2/pi;
-jump_dist = jump_dist(:).*fw/2/pi;
-
-% fit in stable distribution
-f = sasML([jump_size;-jump_size],'sas'); %forced Symetry alpha Stable fitting
+% switch mode
+%     case 'quick'
+%         is_pattern = ~isnan(x_mean) & ~isnan(y_mean);
+%     case 'bayesian'
+%         is_pattern = bayes_factor_ln > log(100);
+% end
+% 
+% pos = [x_mean(is_pattern); y_mean(is_pattern)].';
+% pos_pi = pos.*2*pi/fw;% deal with PBC
+% jump_size = wrapToPi(pos_pi(1:end-jump_win,:)-pos_pi((jump_win+1):end,:));
+% jump_dist = sqrt(sum(jump_size.*jump_size,2)); %radial distance of increment
+% % convert back to real coordinate
+% jump_size = jump_size(:).*fw/2/pi;
+% jump_dist = jump_dist(:).*fw/2/pi;
+% 
+% % fit in stable distribution
+% f = sasML([jump_size;-jump_size],'sas'); %forced Symetry alpha Stable fitting
 
 % output results
 % I have record the bin and sliding win in substructure
@@ -158,21 +157,21 @@ switch lower(mode)
     case 'quick'
         R.grid.quick.radius = width;
         R.grid.quick.centre = [x_mean; y_mean];
-        R.grid.quick.jump_dist_raw = jump_dist_raw;
+        R.grid.quick.jump_dist = jump_dist_raw;
         R.grid.quick.jump_dir = jump_dir_raw;
         R.grid.quick.mlh = mlh;
         R.grid.quick.height = height;
         R.grid.quick.jerk_mean = jerk_mean;
         R.grid.quick.bin_size = win_len; % steps
         R.grid.quick.sliding_win = win_gap;
-        R.grid.quick.jump_size = jump_size;
-        R.grid.quick.jump_dist = jump_dist;
-        R.grid.quick.jump_win = jump_win;
-        R.grid.quick.jump_size_pdf = f;
+%         R.grid.quick.jump_size = jump_size;
+%         R.grid.quick.jump_dist = jump_dist;
+%         R.grid.quick.jump_win = jump_win;
+%         R.grid.quick.jump_size_pdf = f;
     case 'bayesian'
         R.grid.bayes.radius = width;
         R.grid.bayes.centre = [x_mean; y_mean];
-        R.grid.bayes.jump_dist_raw = jump_dist_raw;
+        R.grid.bayes.jump_dist = jump_dist_raw;
         R.grid.bayes.jump_dir = jump_dir_raw;
         R.grid.bayes.mlh = mlh;
         R.grid.bayes.height = height;
@@ -180,10 +179,10 @@ switch lower(mode)
         R.grid.bayes.bayes_factor_ln = bayes_factor_ln;
         R.grid.bayes.bin_size = win_len;
         R.grid.bayes.sliding_win = win_gap;
-        R.grid.bayes.jump_size = jump_size;
-        R.grid.bayes.jump_dist = jump_dist;
-        R.grid.bayes.jump_size_pdf = f;
-        R.grid.quick.jump_win = jump_win;
+%         R.grid.bayes.jump_size = jump_size;
+%         R.grid.bayes.jump_dist = jump_dist;
+%         R.grid.bayes.jump_size_pdf = f;
+%         R.grid.quick.jump_win = jump_win;
 end
 
 % if ~isfield(R, 'grid_sub')
