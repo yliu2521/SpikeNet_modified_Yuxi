@@ -309,6 +309,7 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				cout << "done." << endl;
 			}
 
+			
 			// neuron cov record settings
 			if (group_exist_HDF5(in_filename, pop_n + string("/SAMP103"))) {
 				cout << "\t\t Neuron cov record settings...";
@@ -318,6 +319,16 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				cout << "done." << endl;
 			}
 
+			// real-time centre-of-mass record settings
+			if (group_exist_HDF5(in_filename, pop_n + string("/SAMP006"))) {
+				cout << "\t\t Real-time centre-of-mass record settings...";
+				vector<bool> time_points;
+				read_vector_HDF5(file, pop_n + string("/SAMP006/time_points"), time_points);
+				bool V_flag = read_scalar_HDF5<int>(file, pop_n + string("/SAMP006/data_type/V_flag"));
+				bool I_flag = read_scalar_HDF5<int>(file, pop_n + string("/SAMP006/data_type/I_flag"));
+				network.NeuroPopArray[ind]->start_COM_record(time_points, V_flag, I_flag);
+				cout << "done." << endl;
+			}
 
 			// LFP record settings
 			if (group_exist_HDF5(in_filename, pop_n + string("/SAMP005"))) {
@@ -519,7 +530,7 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 					read_vector_HDF5(file, syn_n + string("/SAMP002/time_points"), time_points);
 					network.ChemSynArray.back()->add_sampling(neurons, time_points);
 					cout << "done." << endl;
-				}
+				}				
 
 
 			}

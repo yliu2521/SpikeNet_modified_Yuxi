@@ -125,6 +125,11 @@ if ~isempty(files)
             OutData{id_out}.neuron_stats.V_time_cov{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/stats_V_time_cov']));
             OutData{id_out}.neuron_stats.V_time_var{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/stats_V_time_var']));
             %
+            OutData{id_out}.neuron_stats.pos_x_I{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/pos_x_I']));
+            OutData{id_out}.neuron_stats.pos_y_I{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/pos_y_I']));
+            OutData{id_out}.neuron_stats.pos_x_V{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/pos_x_V']));
+            OutData{id_out}.neuron_stats.pos_y_V{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/pos_y_V']));
+            %
             OutData{id_out}.neuron_stats.IE_ratio{pop_ind, 1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/stats_IE_ratio']));
             %
             OutData{id_out}.LFP.LFP{pop_ind,1} = transpose(try_h5read(files{id_out}, ['/pop_result_' ,num2str(pop_ind-1), '/LFP_data']));

@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
+#include <complex>
 // for transform
 #include <stdio.h> // for printf
 #include <time.h>       /* time */
@@ -73,7 +74,9 @@ void NeuroPop::init()
 
 	//
 	stats.record = false;
-	stats.record_cov = false;
+	stats.record_cov = false;	
+	stats.record_COM_V = false;
+	stats.record_COM_I = false;
 	LFP.record = false;
 	spike_freq_adpt = false;	
 
@@ -232,6 +235,17 @@ void NeuroPop::start_LFP_record(const vector <vector<double> >& LFP_neurons_inpu
 		}
 	}
 }
+
+void NeuroPop::start_COM_record(const vector<bool>& sample_time_points_input, const bool V_flag, const bool I_flag){	
+	if (V_flag){
+		stats.record_COM_V = true; // set flag
+	}
+
+	if (I_flag){
+		stats.record_COM_I = true; // set flag
+	}
+	stats.time_points = sample_time_points_input; // record the time points to get COM	
+	}
 
 void NeuroPop::set_para(string para_str) {
 	const char delim = ',';
@@ -768,6 +782,29 @@ void NeuroPop::record_stats(const int step_current) {
 		}
 	}
 
+	if (stats.record_COM_V){
+		if (stats.time_points[step_current]){
+			double pos_x_temp, pos_y_temp;
+			real_time_COM(V, pos_x_temp, pos_y_temp);
+		// record center-of-mass
+			stats.pos_x_V.push_back(pos_x_temp);
+			stats.pos_y_V.push_back(pos_y_temp);
+		}		
+	}
+
+	if (stats.record_COM_I){		
+		if (stats.time_points[step_current]){
+			double pos_x_temp, pos_y_temp;
+			vector<double> I_temp; // total current
+			I_temp.resize(I_leak.size()); // allocate space
+			transform(I_leak.begin(), I_leak.end(), I_input.begin(), I_temp.begin(), plus<double>());			
+			real_time_COM(I_temp, pos_x_temp, pos_y_temp);
+		// record center-of-mass
+			stats.pos_x_I.push_back(pos_x_temp);
+			stats.pos_y_I.push_back(pos_y_temp);
+		}		
+	}
+
 	if (stats.record_cov) {
 		if (step_current >= stats.time_start_cov && step_current <= stats.time_end_cov) {
 			bool is_end = step_current == (stats.time_end_cov - 1);
@@ -859,6 +896,40 @@ void Welford_online(const vector<double>& new_data, vector<double>& M, const int
 		M_old = M[i];
 		x = new_data[i];
 		M[i] += (x - M_old) / double(K + 1.0);
+	}
+}
+
+
+void real_time_COM(const vector<double>& data, double& pos_x, double& pos_y) {
+// get real-time center-of-mass of neural properteis such as membrane potential and current
+// it is only for excitatory population in Yifan's model since they are on integer grid postions.
+
+	unsigned int num_neurons = data.size();
+	unsigned int grid_size = (int)floor(sqrt((double)num_neurons));
+	if (grid_size*grid_size == num_neurons) {
+		complex<double> img_unit (0,1), initial_value (0,0), mux , muy;			
+		vector< complex<double> > X (num_neurons), Y (num_neurons);		
+		// [Y,X] = ndgrid(linspace(-pi,pi,grid_size));
+		// mux = s*exp(1i*X); %weighted mean of complex exponential
+		// maybe move this for loop outside the function to avoid run it every step, but the process is ok for me.
+		double step = 2*M_PI/(grid_size - 1);
+		for (unsigned int i = 0; i < grid_size; i++){
+			for (unsigned int j = 0; j < grid_size; j++){
+				Y[i + j*grid_size] = exp((-1*M_PI + i*step)*img_unit) * data[i + j*grid_size];
+				X[j + i*grid_size] = exp((-1*M_PI + i*step)*img_unit) * data[j + i*grid_size];
+			}		
+		}
+
+		mux = accumulate (X.begin(), X.end(), initial_value);
+		muy = accumulate (Y.begin(), Y.end(), initial_value);
+
+		pos_x = arg(mux);
+		pos_y = arg(muy);
+	}
+	else{		
+		cout << "Warning: the grid is not squre! So, you need change real_time_COM by yourself!" << endl;
+		pos_x = 0;
+		pos_y = 0;
 	}
 }
 
@@ -1137,6 +1208,10 @@ void NeuroPop::export_restart(Group& group) {
 		write_vector_HDF5(group_stats, stats.I_tot_time_mean, "I_tot_time_mean");
 		write_vector_HDF5(group_stats, stats.I_tot_time_var, "I_tot_time_var");
 		write_vector_HDF5(group_stats, stats.IE_ratio, "IE_ratio");
+		write_vector_HDF5(group_stats, stats.pos_x_I, "pos_x_I");
+		write_vector_HDF5(group_stats, stats.pos_y_I, "pos_y_I");
+		write_vector_HDF5(group_stats, stats.pos_x_V, "pos_x_V");
+		write_vector_HDF5(group_stats, stats.pos_y_V, "pos_y_V");
 	}
 
 	if (LFP.record) {
@@ -1258,6 +1333,10 @@ void NeuroPop::output_results(H5File& file) {
 		write_vector_HDF5(group_pop, stats.V_time_mean, string("stats_V_time_mean"));
 		write_vector_HDF5(group_pop, stats.V_time_var, string("stats_V_time_var"));
 		write_vector_HDF5(group_pop, stats.IE_ratio, string("stats_IE_ratio"));
+		write_vector_HDF5(group_pop, stats.pos_x_I, string("pos_x_I"));
+		write_vector_HDF5(group_pop, stats.pos_y_I, string("pos_y_I"));
+		write_vector_HDF5(group_pop, stats.pos_x_V, string("pos_x_V"));
+		write_vector_HDF5(group_pop, stats.pos_y_V, string("pos_y_V"));
 	}
 	if (stats.record_cov) {
 		write_matrix_HDF5(group_pop, stats.V_time_cov, string("stats_V_time_cov"));

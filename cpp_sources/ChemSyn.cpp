@@ -26,7 +26,7 @@ ChemSyn::ChemSyn(const double dt_input, const int step_tot_input){
 
 	// default settting
 	stats.record = false;
-	stats.record_cov = false;
+	stats.record_cov = false;	
 	STD.on = false; 
 	STD.on_step = -1;
 	inh_STDP.on_step = -1;
@@ -649,6 +649,7 @@ void ChemSyn::start_cov_record(const int time_start, const int time_end){
 	}
 }
 
+
 void ChemSyn::add_JH_Learning(vector<NeuroPop*> &NeuronPopArray,int isteps, double iscale,double lrate, double lrateall,int intau, double innoise,int type_pre,int type_post, int direction){
 	jh_learn_syn.on=true; //indicates this learning is to be used
 	jh_learn_syn.direction=direction;
@@ -1016,10 +1017,10 @@ void ChemSyn::send_pop_data(vector<NeuroPop*> &NeuronPopArray){
 void ChemSyn::record_stats(int step_current){
 	if (stats.record){
 		double mean_tmp_I, var_tmp_I;
-		Welford_online(I, mean_tmp_I, var_tmp_I);
+		Welford_online(I, mean_tmp_I, var_tmp_I);		
 		// record   
 		stats.I_mean.push_back(mean_tmp_I);
-		stats.I_std.push_back( sqrt(var_tmp_I) );
+		stats.I_std.push_back( sqrt(var_tmp_I) );		
 		
 		if (synapse_model == 0){
 			int k = step_current;
@@ -1027,8 +1028,9 @@ void ChemSyn::record_stats(int step_current){
 			Welford_online(gsm_0.s, stats.s_time_mean, stats.s_time_var, k, is_end);
 			Welford_online(I, stats.I_time_mean, stats.I_time_var, k, is_end);
 		}
-	}
+	}	
 	
+
 	if (stats.record_cov){
 		if (synapse_model == 0){
 			if (step_current >= stats.time_start_cov && step_current <= stats.time_end_cov){

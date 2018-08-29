@@ -46,7 +46,8 @@ public:
 
 	void start_stats_record();
 	void start_cov_record(const int time_start, const int time_end);
-	
+	void start_COM_record(const vector<bool>& sample_time_points_input, const bool V_flag, const bool I_flag);
+
 	void start_LFP_record(const vector< vector<double> >& LFP_neurons);
 
 	void random_V(const double firing_probability); /// Generate random initial condition for V. This function is deprecated!
@@ -160,7 +161,9 @@ protected:
 	struct Stats {
 		bool
 			record, /// whether stats should be recorded (false by default)
-			record_cov;
+			record_cov,
+			record_COM_V,
+			record_COM_I;
 			vector<double>
 			V_mean, /// mean of membrane potential averaged over neurons at each time step
 			V_std, /// std of membrane potential averaged over neurons at each time step
@@ -175,21 +178,27 @@ protected:
 			V_time_mean, /// mean of membrane potential for each neuron
 			V_time_mean_dumb, /// mean of membrane potential for each neuron
 			V_time_var,
-			IE_ratio; /// I-E ratio for each neuron
+			IE_ratio, /// I-E ratio for each neuron
+			pos_x_I, // real-time center-of-mass of current
+			pos_y_I,
+			pos_x_V, // real-time center-of-mass of membrane potential
+			pos_y_V;
 			vector< vector <double> >
-			V_time_cov; /// covariance of membrane potential for each neuron
+			V_time_cov; /// covariance of membrane potential for each neuron			
+			vector<bool>
+			time_points; /// specifies which time steps to get real-time COM;
 			int
 			time_start_cov,
 			time_end_cov;
 		} stats;
 
-		struct Lfp {
-			bool
-		record; /// whether LFP should be recorded (false by default)
-		vector< vector<double> >
-		neurons; /// each component vector defines a LFP measure by specifying which neurons should be included
-		vector< vector<double> >
-		data; /// each component vector is a LFP time series
+	struct Lfp {
+		bool
+			record; /// whether LFP should be recorded (false by default)
+			vector< vector<double> >
+			neurons; /// each component vector defines a LFP measure by specifying which neurons should be included
+			vector< vector<double> >
+			data; /// each component vector is a LFP time series
 	} LFP;
 
 	// parameters for Generate Gaussian random external current
@@ -317,10 +326,22 @@ protected:
 	} jh_learn_pop;
 }; //class declaration must end with a semi-colon.
 
+/*It is a *numerically stable* scheme that calculates variance (and mean) of the data *online*, published in 1962.
+That is, you just keep feeding it new data at every time step and the variance will be updated.
+Any naive attempt at such online scheme will almost surely result in an unstable scheme.
+
+Currently it is used to give the variance of the total input current into each neuron.
+The output is “/pop_result_n/stats_I_tot_time_var” in the HDF5 file.  (R.pop_stats.I_tot_time_var” if you use PostProcessYG).
+When combined with “/pop_result_n/stats_I_tot_time_mean”, you can get a very good idea on if the dynamics is mean-driven or fluctuation-driven.*/
+
 void Welford_online(const vector<double>& new_data, vector<double>& M, vector<double>& S, const int K, const bool is_end); /// online mean and var calculation: Welford's method (1962, Technometrixcs)
 void Welford_online(const vector<double>& new_data, vector<double>& M, vector< vector <double> >& Cov, const int K, const bool is_end); 
 void Welford_online(const vector<double>& new_data, vector<double>& M, const int K);
 void Welford_online(const vector<double>& data, double& M, double& S);
+
+// get real-time center-of-mass of neural properteis such as membrane potential and current
+// it is only for excitatory population in Yifan's model since they are on integer grid postions.
+void real_time_COM(const vector<double>& data, double& pos_x, double& pos_y);
 
 inline NeuroPop::NeuroPop() {}; /// default constructor
 
