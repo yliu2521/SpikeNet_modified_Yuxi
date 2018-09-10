@@ -330,6 +330,17 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				cout << "done." << endl;
 			}
 
+			// shuffle V of local neurons to reduce #patterns
+			if (group_exist_HDF5(in_filename, pop_n + string("/SHUFFLE_V"))) {
+				cout << "\t\t Shuffle V of local neurons settings...";
+				vector<bool> time_points;		
+				read_vector_HDF5(file, pop_n + string("/SHUFFLE_V/time_points"), time_points);		
+				vector< vector<bool> > shuffle_neuron_index;
+				read_matrix_HDF5(file, pop_n + string("/SHUFFLE_V/neurons"), shuffle_neuron_index);					
+				network.NeuroPopArray[ind]->add_shuffle_local_V(time_points, shuffle_neuron_index);
+				cout << "done." << endl;
+			}
+
 			// LFP record settings
 			if (group_exist_HDF5(in_filename, pop_n + string("/SAMP005"))) {
 				cout << "\t\t LFP record settings...";

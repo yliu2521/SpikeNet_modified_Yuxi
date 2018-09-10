@@ -19,7 +19,6 @@ function writeShuffleLocalVHDF5(FID, pop_ind, neuron_ind, time_index)
 
 % for C/C++ index convetion
 pop_ind = pop_ind-1;
-neuron_ind = neuron_ind-1;
 
 % write
 hdf5write(FID,['/config/pops/pop',num2str(pop_ind),'/SHUFFLE_V/neurons'],neuron_ind,'WriteMode','append');

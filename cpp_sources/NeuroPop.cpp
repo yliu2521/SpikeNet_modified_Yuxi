@@ -80,6 +80,9 @@ void NeuroPop::init()
 	LFP.record = false;
 	spike_freq_adpt = false;	
 
+	// shuffle V of local area
+	SHUFFLE_V.shuffle_V_flag = false;
+
 	// perturbation
 	step_perturb = -1;
 	spike_removed = -1;
@@ -245,7 +248,7 @@ void NeuroPop::start_COM_record(const vector<bool>& sample_time_points_input, co
 		stats.record_COM_I = true; // set flag
 	}
 	stats.time_points = sample_time_points_input; // record the time points to get COM	
-	}
+}
 
 void NeuroPop::set_para(string para_str) {
 	const char delim = ',';
@@ -380,7 +383,7 @@ void NeuroPop::update_spikes(const int step_current) {
 				V[i] = V_rt; // reset potential
 				ref_step_left[i] = ref_steps; // steps left for being refractory
 				spike_counter += 1;
-			}
+			}			
 		}
 	}
 
@@ -535,6 +538,11 @@ void NeuroPop::update_V(const int step_current) {
 	// sample_data(step_current);  // this is deprecated due to poor memory performance
 	output_sampled_data_real_time_HDF5(step_current);
 
+	// shuffle the V of local neurons
+	if (SHUFFLE_V.shuffle_V_flag) {
+		shuffle_local_V(step_current);
+	}
+
 	// update menbrane potentials
 	double Vdot;
 	for (int i = 0; i < N; ++i) {
@@ -558,8 +566,7 @@ void NeuroPop::update_V(const int step_current) {
 
 	// record mean and std of membrane potentials
 	record_stats(step_current);
-	record_LFP();
-
+	record_LFP();	
 }
 
 
@@ -691,13 +698,44 @@ void NeuroPop::runaway_check(const int step_current)
 	}
 }
 
+void NeuroPop::add_shuffle_local_V(const vector<bool>& shuffle_time_points_input, const vector< vector<bool> >& shuffle_neuron_index){
+	SHUFFLE_V.shuffle_V_flag = true;
+	SHUFFLE_V.time_points = shuffle_time_points_input; // record the time points to shuffle V
+	SHUFFLE_V.neuron_index = shuffle_neuron_index; // which neurons' V should be shuffled
+}
+
+void NeuroPop::shuffle_local_V(const int step_current){	
+	if (SHUFFLE_V.time_points[step_current]){		
+		vector<double> temp_V;
+		for (unsigned int ind = 0; ind < SHUFFLE_V.neuron_index.size(); ++ind) {
+			// clear queue
+			//temp_V.clear();
+			// push the V of neurons need shuffle to queue
+			for (int i = 0; i < N; ++i) {				
+				if (SHUFFLE_V.neuron_index[ind][i] > 0) {
+					temp_V.push_back(V[i]);
+				}				
+			}			
+			// shuffle
+			shuffle (temp_V.begin(), temp_V.end(), default_random_engine(my_seed));
+
+			// pop the V of neurons need shuffle to queue
+			for (int i = 0; i < N; ++i) {				
+				if (SHUFFLE_V.neuron_index[ind][i] > 0) {
+					V[i] = temp_V.back();
+					temp_V.pop_back();
+				}				
+			}			
+		}
+	}
+}	
+
+
 
 void NeuroPop::add_JH_Learn(double noise){
 	jh_learn_pop.on=true;
 	jh_learn_pop.rhatE.resize(N,0);
 	jh_learn_pop.rhatI.resize(N,0);
-
-
 	jh_learn_pop.noise=noise;
 }
 

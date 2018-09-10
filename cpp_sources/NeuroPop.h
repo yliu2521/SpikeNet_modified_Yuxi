@@ -72,6 +72,10 @@ public:
 	void load_file_current_input(string fname);
 	void get_current_from_file();
 
+	// shuffle membrane potential of local area for reducing #patterns
+	void add_shuffle_local_V(const vector<bool>& shuffle_time_points_input, const vector< vector<bool> >& shuffle_neuron_index);
+	void shuffle_local_V(const int step_current);
+
 
 	void add_JH_Learn(double noise);
 	void get_all_rhat_JHLearn(vector<ChemSyn*> &ChemSynArray, const int step_current);
@@ -192,6 +196,15 @@ protected:
 			time_end_cov;
 		} stats;
 
+	struct Shuffle_V{
+		bool 
+			shuffle_V_flag;
+		vector<bool>
+			time_points; /// specifies which time steps to shuffle V;	
+		vector< vector <bool> >
+			neuron_index; /// each component vector defines a shuffle cluster by specifying which neurons should be shuffle		
+	}SHUFFLE_V;
+	
 	struct Lfp {
 		bool
 			record; /// whether LFP should be recorded (false by default)
