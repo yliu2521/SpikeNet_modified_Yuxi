@@ -34,6 +34,8 @@ public:
 	void send_pop_data(vector<NeuroPop*> &NeuronPopArray); ///  send data to neuron populations
 
 	void add_short_term_depression(const int STD_on_step); /// turn on short term depression
+
+	void add_synaptic_plasticity(const int SP_on_step); /// turn on synaptic plasticity
 	
 	void add_inh_STDP(const int inh_STDP_on_step); /// turn on inhibitory STDP
 	
