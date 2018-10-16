@@ -325,7 +325,7 @@ void ChemSyn::update_SP(const int step_current){
             SP.x[spikes_pre.at(i)] *= 1.0 - SP.u[spikes_pre.at(i)];
 		}
 		for (int i = 0; i < N_pre; ++i){
-			SP.u[i] = SP.u[i] * (1.0 - dt / SP.tau_F) + dt * U / SP.tau_F; 
+			SP.u[i] = SP.u[i] * (1.0 - dt / SP.tau_F) + dt * SP.U / SP.tau_F; 
             SP.x[i] = SP.x[i] * (1.0 - dt / SP.tau_D) + dt / SP.tau_D; 
             K_trans[i] = 1.0 / steps_trans * SP.u[i] * SP.x[i];
 		}
@@ -547,7 +547,7 @@ void ChemSyn::add_synaptic_plasticity(const int SP_on_step_input){
 	SP.U =  0.2; // baseline utilization factor; see Mongillo, 2008, Science
 	SP.tau_F = 1500; // ms; recovery time of utilization factor
     SP.tau_D = 200; // ms; recovery time of synaptic resources
-	SP.u.assign(N_pre, 1.0);
+	SP.u.assign(N_pre, 0.3);
 	SP.x.assign(N_pre, 1.0);
 }
 
