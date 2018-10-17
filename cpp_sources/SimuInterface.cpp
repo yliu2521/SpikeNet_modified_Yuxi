@@ -216,6 +216,18 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				cout << "done." << endl;
 			}
 
+			// external current setting with time-variant factors
+			if (group_exist_HDF5(in_filename, pop_n + string("/INIT014"))) {
+				cout << "\t\t External current (time-variant) settings...";
+				vector<double> mean, std, mean_TV, std_TV;
+				read_vector_HDF5(file, pop_n + string("/INIT014/mean"), mean);
+				read_vector_HDF5(file, pop_n + string("/INIT014/std"), std);
+				read_vector_HDF5(file, pop_n + string("/INIT014/mean_TV"), mean_TV);
+				read_vector_HDF5(file, pop_n + string("/INIT014/std_TV"), std_TV);
+				network.NeuroPopArray[ind]->set_gaussian_I_ext(mean, std, mean_TV, std_TV);
+				cout << "done." << endl;
+			}
+
 			// external conductance setting
 			if (group_exist_HDF5(in_filename, pop_n + string("/INIT012"))) {
 				cout << "\t\t External conductance settings...";
@@ -223,6 +235,18 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				read_vector_HDF5(file, pop_n + string("/INIT012/mean"), mean);
 				read_vector_HDF5(file, pop_n + string("/INIT012/std"), std);
 				network.NeuroPopArray[ind]->set_gaussian_g_ext(mean, std);
+				cout << "done." << endl;
+			}
+
+			// external conductance setting with time-variant factors
+			if (group_exist_HDF5(in_filename, pop_n + string("/INIT018"))) {
+				cout << "\t\t External conductance (time-variant) settings...";
+				vector<double> mean, std, mean_TV, std_TV;
+				read_vector_HDF5(file, pop_n + string("/INIT018/mean"), mean);
+				read_vector_HDF5(file, pop_n + string("/INIT018/std"), std);
+				read_vector_HDF5(file, pop_n + string("/INIT018/mean_TV"), mean_TV);
+				read_vector_HDF5(file, pop_n + string("/INIT018/std_TV"), std_TV);
+				network.NeuroPopArray[ind]->set_gaussian_g_ext(mean, std, mean_TV, std_TV);
 				cout << "done." << endl;
 			}
 
@@ -486,9 +510,9 @@ bool SimuInterface::import_HDF5(string in_filename_input) {
 				}
 
 				// SP
-				if (group_exist_HDF5(in_filename, syn_n + string("/INIT014"))) {
+				if (group_exist_HDF5(in_filename, syn_n + string("/INIT015"))) {
 					cout << "\t\t Synaptic plasticity settings...";
-					int SP_on_step = read_scalar_HDF5<int>(file, syn_n + string("/INIT014/SP_on_step"));
+					int SP_on_step = read_scalar_HDF5<int>(file, syn_n + string("/INIT015/SP_on_step"));
 					network.ChemSynArray.back()->add_synaptic_plasticity(SP_on_step);
 					cout << "done." << endl;
 				}
