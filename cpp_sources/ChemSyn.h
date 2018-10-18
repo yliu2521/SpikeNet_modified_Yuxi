@@ -218,7 +218,6 @@ protected:
 			f_ves; // the fraction of available vesicles
 	} STD;
 
-	// connection matrices and bookkeeping for 1-variable kinetic synapse model
 	struct Sp {
 		double // synaptic plasticity constants
 			U, // baseline utilization factor
@@ -227,7 +226,7 @@ protected:
 		bool
 			on; //  
 		int
-			on_step; // the step where STD should turned on
+			on_step; // the step where SP should turned on
 		vector<double>
 			u, // the utilization parameter
 			x; // the amount of available resources

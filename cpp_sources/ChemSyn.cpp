@@ -1177,7 +1177,7 @@ void ChemSyn::import_restart(H5File& file, int syn_ind){
 		SP.tau_D=read_scalar_HDF5<double>(file,  str+"tau_D");
 		SP.on_step=read_scalar_HDF5<bool>(file,  str+"on_step");
 		read_vector_HDF5(file, str+ "u",SP.u);
-                read_vector_HDF5(file, str+ "x",SP.x);
+        read_vector_HDF5(file, str+ "x",SP.x);
 	}
 
 	synapse_model=read_scalar_HDF5<int>(file,syn_str+ "synapse_model");
