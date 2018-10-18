@@ -1,4 +1,4 @@
-function writeExtConductanceSettingsHDF5(FID, pop_ind, mean, std, mean_TV, std_TV, modify)
+function writeExtConductanceTimeVariantSettingsHDF5(FID, pop_ind, mean, std, mean_TV, std_TV, modify)
 % write external Conductance settings
 %       FID: file id for writing data
 %   pop_ind: neuron population index
