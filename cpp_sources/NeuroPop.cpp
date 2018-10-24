@@ -50,7 +50,6 @@ void NeuroPop::init()
 	I_GJ.assign(N, 0.0);
 	I_ext.assign(N, 0.0);
 	I_K.assign(N, 0.0);
-	I_ext_mean.assign(N, 0.0);
 	ref_step_left.assign(N, 0);
 	ref_steps = (int)round(tau_ref / dt);
 	// heterogenous spike-freq-adap
