@@ -47,8 +47,8 @@ if ~isempty(files)
         end
         fprintf('Current ReadYG file is: %s\n', files{id_out});
         
-                
-
+        
+        
         % prepare containers
         OutData{id_out}.step_killed = [];
         OutData{id_out}.Num_pop = [];
@@ -100,7 +100,13 @@ if ~isempty(files)
             OutData{id_out}.neuron_sample.neuron_ind{pop_ind,1} = transpose(try_h5read(config_filename, ['/config/pops/pop',num2str(pop_ind-1),'/SAMP001/neurons']));
             OutData{id_out}.neuron_sample.t_ind{pop_ind,1} = transpose(try_h5read(config_filename, ['/config/pops/pop',num2str(pop_ind-1),'/SAMP001/time_points']));
         end
-
+%         u = transpose(try_h5read(files{id_out},'/syn_result_2/sample_u'));
+%         x = transpose(try_h5read(files{id_out},'/syn_result_2/sample_x'));
+%         LP = 100;
+%         for i = 1:2
+%             OutData{id_out}.syn_sample.u_mean(i,:) = mean(u((1:LP)+LP*(i-1),:));
+%             OutData{id_out}.syn_sample.x_mean(i,:) = mean(x((1:LP)+LP*(i-1),:));
+%         end
         
         % population results
         for pop_ind = 1:OutData{id_out}.Num_pop
@@ -220,7 +226,7 @@ if ~isempty(files)
     %                     end
     %
     %
-
+    
     %
     
     %
@@ -340,22 +346,22 @@ end
 fprintf('\t Re-formatting data...\n');
 Result_num = length(OutData);
 for r_num = 1:Result_num
-
-
+    
+    
     % adaptation of step_killed
     if OutData{r_num}.step_killed > 0
         OutData{r_num}.step_tot = OutData{r_num}.step_killed;
     end
-
+    
     %     % Re-format VI_sample into coloum matrix
     %     OutData{r_num} = ReformatVI_sample(OutData{r_num});
-
+    
     % Reformat spike history data
     OutData{r_num} = ReformatSpikeHistory(OutData{r_num});
-
+    
     % Discard transient data
     OutData{r_num} = DiscardTransientData(OutData{r_num});
-
+    
     % Reduce solution
     OutData{r_num} = ReduceSolution(OutData{r_num});
 end

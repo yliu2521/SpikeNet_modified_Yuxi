@@ -35,7 +35,7 @@ public:
 
 	void add_short_term_depression(const int STD_on_step); /// turn on short term depression
 
-	void add_synaptic_plasticity(const int SP_on_step); /// turn on synaptic plasticity
+	void add_synaptic_plasticity(const int SP_on_step, const int tau_D, const int tau_F, const double U); /// turn on synaptic plasticity
 	
 	void add_inh_STDP(const int inh_STDP_on_step); /// turn on inhibitory STDP
 	
@@ -147,7 +147,13 @@ protected:
 		vector<bool> 
 			time_points; // logical vector as long as time vector
 		vector< vector<double> >
+		    u,
+		    x,
+				//nsp,
 			data; //  sampled neurons x time points
+		// vector<double>
+		   // u_mean,
+		   // x_mean;
 	} sample;
 
 	// Build-in paramters for time-evolution of post-synaptic conductance change
@@ -167,7 +173,8 @@ protected:
 	int
 		steps_trans; // tranmitter duration in simulation steps
 	vector<double>
-		K_trans; // 1.0/transmitter_steps!
+		K_trans, // 1.0/transmitter_steps!
+		K_trans_sp; // coeffient in transmitter strength 
 	double
 		exp_step_decay, // exp(-dt/tau_decay)
 		exp_step_rise;
@@ -219,17 +226,18 @@ protected:
 	} STD;
 
 	struct Sp {
-		double // synaptic plasticity constants
-			U, // baseline utilization factor
-			tau_F,
-			tau_D;
+		double 
+			U; // baseline utilization factor
 		bool
 			on; //  
 		int
+		  tau_F, // synaptic plasticity constants
+			tau_D,
 			on_step; // the step where SP should turned on
 		vector<double>
 			u, // the utilization parameter
-			x; // the amount of available resources
+			x, // the amount of available resources
+			nsp; // index for neurons which have spikes
 	} SP;
 
 	//

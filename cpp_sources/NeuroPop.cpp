@@ -450,12 +450,15 @@ void NeuroPop::generate_I_ext(const int step_current) {
 			auto gaus = bind(nrm_dist, ref(gen));
 
 			for (int i = 0; i < N; ++i) {
-				I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[step_current] + gaus() * I_ext_std[i] * I_ext_std_TV_factor[step_current] * one_on_sqrt_dt; // be careful about the sqrt(dt) term (Wiener Process)
+				// I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[step_current] + I_ext_meanTWO[i] * I_ext_mean_TV_factorTWO[step_current] + I_ext_meanTHREE[i] * I_ext_mean_TV_factorTHREE[step_current] + gaus() * I_ext_std[i] * I_ext_std_TV_factor[step_current] * one_on_sqrt_dt; // be careful about the sqrt(dt) term (Wiener Process)
+				int group_i = I_ext_TV_group[i];
+				I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[group_i][step_current] + gaus() * I_ext_std[i] * I_ext_std_TV_factor[group_i][step_current] * one_on_sqrt_dt; // be careful about the sqrt(dt) term (Wiener Process)
 			}
 		}
 		else {
 			for (int i = 0; i < N; ++i) {
-				I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[step_current];
+				// I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[step_current] + I_ext_meanTWO[i] * I_ext_mean_TV_factorTWO[step_current] + I_ext_meanTHREE[i] * I_ext_mean_TV_factorTHREE[step_current];
+				I_ext[i] += I_ext_mean[i] * I_ext_mean_TV_factor[I_ext_TV_group[i]][step_current];
 			}
 		}
 	}
@@ -622,8 +625,17 @@ void NeuroPop::sample_data(const int step_current) {
 void NeuroPop::set_gaussian_I_ext(const vector<double>& mean, const vector<double>& std) {
 	I_ext_mean = mean;
 	I_ext_std = std;
-	I_ext_mean_TV_factor.assign(step_tot, 1.0);
-	I_ext_std_TV_factor.assign(step_tot, 1.0);
+	// I_ext_mean_TV_factor.assign(step_tot, 1.0);
+	// I_ext_std_TV_factor.assign(step_tot, 1.0);
+	// I_ext_meanTWO.assign(N, 0.0);
+	// I_ext_mean_TV_factorTWO.assign(step_tot, 0.0);
+	// I_ext_meanTHREE.assign(N, 0.0);
+	// I_ext_mean_TV_factorTHREE.assign(step_tot, 0.0);
+	I_ext_mean_TV_factor.resize(1);
+    I_ext_mean_TV_factor[0].assign(step_tot, 1.0);
+    I_ext_std_TV_factor.resize(1);
+    I_ext_std_TV_factor[0].assign(step_tot, 1.0);
+    I_ext_TV_group.assign(N, 0);
  	double max_std = *max_element(I_ext_std.begin(), I_ext_std.end());
 	if (max_std == 0.0) {
 		I_ext_std.resize(0);
@@ -632,13 +644,55 @@ void NeuroPop::set_gaussian_I_ext(const vector<double>& mean, const vector<doubl
  void NeuroPop::set_gaussian_I_ext(const vector<double>& mean, const vector<double>& std, const vector<double>&  mean_TV_factor, const vector<double>&  std_TV_factor) {
 	I_ext_mean = mean;
 	I_ext_std = std;
-	I_ext_mean_TV_factor = mean_TV_factor;
-	I_ext_std_TV_factor = std_TV_factor;
+	// I_ext_mean_TV_factor = mean_TV_factor;
+	// I_ext_std_TV_factor = std_TV_factor;
+	// I_ext_meanTWO.assign(N, 0.0);
+	// I_ext_mean_TV_factorTWO.assign(step_tot, 0.0);
+	// I_ext_meanTHREE.assign(N, 0.0);
+	// I_ext_mean_TV_factorTHREE.assign(step_tot, 0.0);
+	I_ext_mean_TV_factor.resize(1);
+    I_ext_mean_TV_factor[0] = mean_TV_factor;
+    I_ext_std_TV_factor.resize(1);
+    I_ext_std_TV_factor[0] = std_TV_factor;
+    I_ext_TV_group.assign(N, 0);
 
 	double max_std = *max_element(I_ext_std.begin(), I_ext_std.end());
 	if (max_std == 0.0) {
 		I_ext_std.resize(0);
 	}
+}
+ // void NeuroPop::set_gaussian_I_ext(const vector<double>& mean, const vector<double>& std, const vector<double>&  mean_TV_factor, const vector<double>&  std_TV_factor, const vector<double>& meanTWO, const vector<double>&  mean_TV_factorTWO, const vector<double>& meanTHREE, const vector<double>&  mean_TV_factorTHREE) {
+    // I_ext_mean = mean;
+	// I_ext_std = std;
+	// I_ext_mean_TV_factor = mean_TV_factor;
+	// I_ext_std_TV_factor = std_TV_factor;
+	// I_ext_meanTWO = meanTWO;
+	// I_ext_mean_TV_factorTWO = mean_TV_factorTWO;
+	// I_ext_meanTHREE = meanTHREE;
+	// I_ext_mean_TV_factorTHREE = mean_TV_factorTHREE;
+
+	// double max_std = *max_element(I_ext_std.begin(), I_ext_std.end());
+	// if (max_std == 0.0) {
+		// I_ext_std.resize(0);
+	// }
+// }
+void NeuroPop::set_gaussian_I_ext(const vector<double>& mean, const vector<double>& std, const vector< vector<double> >&  mean_TV_factor, const vector< vector<double> >&  std_TV_factor, const vector< int >& TV_group) {
+    
+    I_ext_mean = mean;
+    I_ext_std = std;
+    int n_group = int(mean_TV_factor.size());
+    I_ext_mean_TV_factor.resize(n_group);
+    I_ext_std_TV_factor.resize(n_group);
+    for (int ind = 0; ind < n_group; ++ind) {
+        I_ext_mean_TV_factor[ind] = mean_TV_factor[ind];
+        I_ext_std_TV_factor[ind] = std_TV_factor[ind];
+    }
+    I_ext_TV_group = TV_group;
+    
+    double max_std = *max_element(I_ext_std.begin(), I_ext_std.end());
+    if (max_std == 0.0) {
+        I_ext_std.resize(0);
+    }
 }
 
 void NeuroPop::set_gaussian_g_ext(const vector<double>& mean, const vector<double>& std) {

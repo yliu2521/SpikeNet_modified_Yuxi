@@ -204,6 +204,7 @@ void ChemSyn::init(){
 	
 	// transmitter_strength
 	K_trans.assign(N_pre, 1.0 / steps_trans); // be careful! 1 / transmitter steps gives zero (int)!!
+	K_trans_sp.assign(N_pre, 0.3 );
 	
 	// Synapse model choice
 	// model 0, the default model
@@ -315,20 +316,37 @@ void ChemSyn::update_STD(const int step_current){
 }
 
 void ChemSyn::update_SP(const int step_current){
-	// SP modifies K_trans
+	// SP modifies K_trans_sp
 	
 	if (SP.on_step == step_current){SP.on = true;}
-	// synaptic plasticity
-	if (SP.on == true){
+	// synaptic plasticity	
+	if (SP.on == true && pop_ind_pre == 0 && pop_ind_post == 0){
+		SP.nsp.assign(N_pre, 0);
 		for (unsigned int i = 0; i < spikes_pre.size(); ++i){ 
-			SP.u[spikes_pre.at(i)] = SP.u[spikes_pre.at(i)] * (1.0 - SP.U) + SP.U; 
-            SP.x[spikes_pre.at(i)] *= 1.0 - SP.u[spikes_pre.at(i)];
+			SP.nsp[spikes_pre.at(i)] = 1.0; 
 		}
+		if (SP.tau_D > 0 && SP.tau_F > 0){		
 		for (int i = 0; i < N_pre; ++i){
-			SP.u[i] = SP.u[i] * (1.0 - dt / SP.tau_F) + dt * SP.U / SP.tau_F; 
-            SP.x[i] = SP.x[i] * (1.0 - dt / SP.tau_D) + dt / SP.tau_D; 
-            K_trans[i] = 1.0 / steps_trans * SP.u[i] * SP.x[i];
+			K_trans_sp[i] = SP.u[i] * SP.x[i];
+			SP.u[i] = SP.u[i] * (1.0 - dt / SP.tau_F) + dt * SP.U / SP.tau_F + SP.nsp[i] * SP.U * (1.0 - SP.u[i]); 
+            SP.x[i] = SP.x[i] * (1.0 - dt / SP.tau_D) + dt / SP.tau_D - SP.nsp[i] * SP.u[i] * SP.x[i];             
+			// SP.nsp[i] = 0;
 		}
+	}
+	else if (SP.tau_D > 0 && SP.tau_F < 0){
+		for (int i = 0; i < N_pre; ++i){
+			K_trans_sp[i] = SP.x[i];
+            SP.x[i] = SP.x[i] * (1.0 - dt / SP.tau_D) + dt / SP.tau_D - SP.nsp[i] * SP.U * SP.x[i];             
+			// SP.nsp[i] = 0;
+		}
+	}
+	else if (SP.tau_D < 0 && SP.tau_F > 0){
+		for (int i = 0; i < N_pre; ++i){
+			K_trans_sp[i] = SP.u[i];
+			SP.u[i] = SP.u[i] * (1.0 - dt / SP.tau_F) + dt * SP.U / SP.tau_F + SP.nsp[i] * SP.U * (1.0 - SP.u[i]);             
+			// SP.nsp[i] = 0;
+		}
+	}
 	}
 
 }
@@ -410,7 +428,11 @@ void ChemSyn::update_gs_sum_model_0(const int step_current){
 					j_post = C[i_pre][syn_ind]; // index of the post-synaptic neuron
 					delay_step = D[i_pre][syn_ind]; // delay in steps for this post-synaptic neuron
 					t_ring = int( (step_current + delay_step) % gsm_0.buffer_steps ); // index in the gs_buffer
-					gsm_0.d_gs_sum_buffer[t_ring][j_post] += K_trans[i_pre] * (1.0 - gsm_0.s[i_pre]) * K[i_pre][syn_ind];
+					if (SP.on == true && pop_ind_pre == 0 && pop_ind_post == 0){
+					// gsm_0.d_gs_sum_buffer[t_ring][j_post] += K_trans[i_pre] * K_trans_sp[i_pre] * (1.0 - gsm_0.s[i_pre]) * K[i_pre][syn_ind];
+						gsm_0.d_gs_sum_buffer[t_ring][j_post] += K_trans_sp[i_pre] * SP.nsp[i_pre] * K[i_pre][syn_ind];// 
+					}
+					else{gsm_0.d_gs_sum_buffer[t_ring][j_post] += K_trans[i_pre] * (1.0 - gsm_0.s[i_pre]) * K[i_pre][syn_ind];}					
 				}
 				gsm_0.trans_left[i_pre] -= 1;
 				gsm_0.s[i_pre] += K_trans[i_pre] * (1.0 - gsm_0.s[i_pre]);
@@ -505,9 +527,17 @@ void ChemSyn::add_sampling(const vector<int> & sample_neurons_input, const vecto
 	}
 	int sample_neurons_tot = sample.neurons.size();// count non zero elements in sample_time_points
 
-	sample.data.resize(sample_neurons_tot);
+	// sample.data.resize(sample_neurons_tot);
+	sample.u.resize(sample_neurons_tot);
+	sample.x.resize(sample_neurons_tot);
+	// sample.nsp.resize(sample_neurons_tot);
+	// sample.u_mean.resize(sample_time_points_tot);
+	// sample.x_mean.resize(sample_time_points_tot);
 	for (int i = 0; i < sample_neurons_tot; ++i){
-		sample.data[i].reserve(sample_time_points_tot); // reserve and push_back so that it won't be affected by adapting step_tot
+		sample.u[i].reserve(sample_time_points_tot);
+		sample.x[i].reserve(sample_time_points_tot);
+		// sample.nsp[i].reserve(sample_time_points_tot);
+		// sample.data[i].reserve(sample_time_points_tot); // reserve and push_back so that it won't be affected by adapting step_tot
 	}
 
 }
@@ -531,7 +561,7 @@ void ChemSyn::add_short_term_depression(const int STD_on_step_input){
 	STD.exp_ves = exp(-dt / STD.tau_ves);
 }
 
-void ChemSyn::add_synaptic_plasticity(const int SP_on_step_input){
+void ChemSyn::add_synaptic_plasticity(const int SP_on_step_input, const int tau_D, const int tau_F, const double U){
 	if (syn_type != 0){
 		cout << "Warning: initializing SP on non-AMPA synapses!" << endl;
 	}
@@ -544,11 +574,12 @@ void ChemSyn::add_synaptic_plasticity(const int SP_on_step_input){
 		SP.on = true;
 	}
 	// synaptic plasticity
-	SP.U =  0.2; // baseline utilization factor; see Mongillo, 2008, Science
-	SP.tau_F = 1500; // ms; recovery time of utilization factor
-    SP.tau_D = 200; // ms; recovery time of synaptic resources
+	SP.U =  U; // baseline utilization factor; see Mongillo, 2008, Science
+	SP.tau_F = tau_F; // 1500 ms; recovery time of utilization factor
+    SP.tau_D = tau_D; // 200 ms; recovery time of synaptic resources
 	SP.u.assign(N_pre, 0.3);
 	SP.x.assign(N_pre, 1.0);
+	SP.nsp.assign(N_pre, 0);
 }
 
 
@@ -602,8 +633,20 @@ void ChemSyn::sample_data(const int step_current){
 		if (sample.time_points[step_current]){ // push_back is amazing
 			for (unsigned int i = 0; i < sample.neurons.size(); ++i){ // performance issue when sampling many neurons?
 				int ind_temp = sample.neurons[i];
-				sample.data[i].push_back( I[ind_temp] );
+				// sample.data[i].push_back( I[ind_temp] );
+				sample.u[i].push_back( SP.u[ind_temp] );
+				sample.x[i].push_back( SP.x[ind_temp] );
+				// sample.nsp[i].push_back( SP.nsp[ind_temp] );
 			}
+			// sample.u_mean[step_current] = 0;
+			// sample.x_mean[step_current] = 0;
+			// for (unsigned int i = 0; i < sample.neurons.size(); ++i){ // performance issue when sampling many neurons?
+			    // int ind_temp = sample.neurons[i];
+				// sample.u_mean[step_current] += sample.u[i].back();
+				// sample.x_mean[step_current] += sample.x[i].back();
+			// }
+			// sample.u_mean[step_current] = sample.u_mean[step_current]/sample.neurons.size();
+			// sample.x_mean[step_current] = sample.x_mean[step_current]/sample.neurons.size();
 		}
 	}
 }
@@ -1135,6 +1178,7 @@ void ChemSyn::import_restart(H5File& file, int syn_ind){
 	tau_decay=read_scalar_HDF5<double>(file,syn_str+ "tau_decay");
 	steps_trans=read_scalar_HDF5<double>(file,syn_str+ "steps_trans");
 	read_vector_HDF5(file, syn_str+"K_trans",K_trans);
+	read_vector_HDF5(file, syn_str+"K_trans_sp",K_trans_sp);
 	exp_step_decay=read_scalar_HDF5<double>(file, syn_str+"exp_step_decay");
 	exp_step_rise=read_scalar_HDF5<double>(file,syn_str+ "exp_step_rise");
 	miuMg_NMDA=read_scalar_HDF5<double>(file, syn_str+"miuMg_NMDA");
@@ -1178,6 +1222,7 @@ void ChemSyn::import_restart(H5File& file, int syn_ind){
 		SP.on_step=read_scalar_HDF5<bool>(file,  str+"on_step");
 		read_vector_HDF5(file, str+ "u",SP.u);
         read_vector_HDF5(file, str+ "x",SP.x);
+		read_vector_HDF5(file, str+ "nsp",SP.nsp);
 	}
 
 	synapse_model=read_scalar_HDF5<int>(file,syn_str+ "synapse_model");
@@ -1339,6 +1384,7 @@ void ChemSyn::export_restart(Group& group, int syn_ind){
 	write_scalar_HDF5(group_syn,tau_decay, "tau_decay");
 	write_scalar_HDF5(group_syn,steps_trans, "steps_trans");
 	write_vector_HDF5(group_syn,K_trans, "K_trans");
+	write_vector_HDF5(group_syn,K_trans_sp, "K_trans_sp");
 	write_scalar_HDF5(group_syn,exp_step_decay, "exp_step_decay");
 	write_scalar_HDF5(group_syn,exp_step_rise, "exp_step_rise");
 	write_scalar_HDF5(group_syn,miuMg_NMDA, "miuMg_NMDA");
@@ -1385,6 +1431,7 @@ void ChemSyn::export_restart(Group& group, int syn_ind){
 		write_scalar_HDF5(group_SP,SP.on_step, "on_step");
 		write_vector_HDF5(group_SP,SP.u, "u");
         write_vector_HDF5(group_SP,SP.x, "x");
+		write_vector_HDF5(group_SP,SP.nsp, "nsp");
 	}
 
 	write_scalar_HDF5(group_syn,synapse_model, "synapse_model");
@@ -1532,7 +1579,10 @@ void ChemSyn::output_results(H5File& file, int syn_ind){
 	write_string_HDF5(group_syn, dump_para(), string("syn_para"));
 		
 	if (!sample.neurons.empty()){
-		write_matrix_HDF5(group_syn, sample.data, string("sample_data"));
+		// write_matrix_HDF5(group_syn, sample.data, string("sample_data"));
+		write_matrix_HDF5(group_syn, sample.u, string("sample_u"));
+		write_matrix_HDF5(group_syn, sample.x, string("sample_x"));
+		// write_matrix_HDF5(group_syn, sample.nsp, string("sample_nsp"));
 	}
 	
 	if (stats.record){

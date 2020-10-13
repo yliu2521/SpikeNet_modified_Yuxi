@@ -27,6 +27,7 @@ fprintf(FID, '%s\n', '> SAMP002');
 fprintf(FID, '%d, %d, %d,\n', pop_ind_pre, pop_ind_post, syn_type);
 fprintf(FID, '%d,', sample_ind); fprintf(FID,'\n');
 fprintf(FID, '%d,', time_index); fprintf(FID,'\n\n');
-
-
+% record EE
+hdf5write(FID,'/config/syns/syn2/SAMP002/neurons',sample_ind,'WriteMode','append');
+hdf5write(FID,'/config/syns/syn2/SAMP002/time_points',time_index,'WriteMode','append');
 end
