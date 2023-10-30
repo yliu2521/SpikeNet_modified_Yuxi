@@ -58,7 +58,7 @@ cd tmp
 ```
 3. Clone the github repo
 ```
-git clone https://github.com/BrainDynamicsUSYD/SpikeNet
+git clone https://github.com/yliu2521/SpikeNet_modified_Yuxi
 ```
 4. Build the c++ simulator
 ```
